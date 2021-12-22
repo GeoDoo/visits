@@ -3,19 +3,22 @@ const redis = require("redis");
 
 const app = express();
 const port = 8081;
-const client = redis.createClient({
-  host: "redis-server",
-  port: 6379,
-});
 
-client.set("visits", 0);
+(async () => {
+  const client = redis.createClient({ url: "redis://redis:6379" });
 
-app.get("/", (_req, res) => {
-  client.get("visits", (err, visits) => {
+  await client.connect();
+
+  await client.set("visits", 0);
+
+  app.get("/", async (_req, res) => {
+    const visits = await client.get("visits");
+
     res.send(`Number of visits is ${visits}`);
-    client.set("visits", parseInt(visits) + 1);
+    
+    await client.set("visits", parseInt(visits) + 1);
   });
-});
+})();
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
